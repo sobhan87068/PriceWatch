@@ -9,18 +9,31 @@ import ir.sban.spring.pricewatch.user.model.User;
 import ir.sban.spring.pricewatch.user.repository.UserRepository;
 import ir.sban.spring.pricewatch.user.util.JwtUtil;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 @Service
 public class UserServiceImpl implements UserService {
+    @Autowired
+    private final AuthenticationManager authenticationManager;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -40,30 +53,33 @@ public class UserServiceImpl implements UserService {
 
         User saved = userRepository.save(user);
 
-        return mapToResponse(saved);
+        return mapToResponse(saved.getUsername());
     }
 
     @Override
     public UserResponse login(LoginRequest request) {
-        User existing = userRepository.findByEmail(request.getUsername()).orElseThrow(
-                () -> new RuleException("username.not.exist", "username")
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        if (!passwordEncoder.matches(request.getPassword(), existing.getPassword())) {
-            throw new RuleException("username.not.exist", "username");
-        }
-
-        return mapToResponse(existing);
+        return mapToResponse(authentication.getName());
     }
 
     @Override
-    public void updatePassword(UpdatePasswordRequest request) {
-//        User user = userRepository.
+    public void updatePassword(String username, UpdatePasswordRequest request) {
+        User user = userRepository.findByEmail(username).orElseThrow();
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new RuleException("old.password.not.match", "old.password");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 
-    private UserResponse mapToResponse(User saved) {
+    private UserResponse mapToResponse(String username) {
         return UserResponse.builder()
-                .token(jwtUtil.generateToken(saved.getEmail(),  saved.getId()))
+                .token(jwtUtil.generateToken(username))
                 .build();
     }
 
