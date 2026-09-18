@@ -31,6 +31,8 @@ The system does **not** automatically check external stores yet.
 ### In scope
 
 - User creation.
+- JWT authentication.
+- Spring Security authorization.
 - Product creation, retrieval and update.
 - Price-watch creation, listing and deletion.
 - Manual price-history recording and retrieval.
@@ -46,8 +48,6 @@ The system does **not** automatically check external stores yet.
 
 Do **not** implement these during Month 1:
 
-- JWT authentication.
-- Spring Security authorization.
 - Password reset or email verification.
 - Automatic price checking.
 - Web scraping.
@@ -95,14 +95,29 @@ Future price observations are stored in `PriceHistory`.
 
 ## FR-01 — Create User
 
-**Endpoint:** `POST /api/v1/users`
+**Endpoint:** `POST /api/v1/user/[register|login|update-password]`
 
 ### Request
-
+register:
 ```json
 {
-  "email": "user@example.com",
+  "username": "user@example.com",
+  "password": "secret-password",
+  "password-confirm": "secret-password"
+}
+```
+login:
+```json
+{
+  "username": "user@example.com",
   "password": "secret-password"
+}
+```
+update-password:
+```json
+{
+  "oldPassword": "secret-password",
+  "newPassword": "new-secret-password"
 }
 ```
 
@@ -112,18 +127,16 @@ Future price observations are stored in `PriceHistory`.
 - Email must be unique.
 - Password is required and must meet a minimum length.
 - Password must never be stored as plain text.
-- The API returns the new user's ID.
-- The API never returns the password or password hash.
+- The API returns the jwt token containing username
 
 ### Example response
-
+Login/Register
 ```json
 {
-  "id": 1,
-  "email": "user@example.com",
-  "createdAt": "2026-09-10T12:00:00Z"
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzb2JoYW4uYXJ5YW5uYW1hemlAZ21haWwuY29tIiwiaWF0IjoxNzg5NjQzNzMwLCJleHAiOjE3ODk3MzAxMzB9.Qs6YiarhQA2phzui3xPam13EWWL0fxtKVBzafh9LMP4"
 }
 ```
+update-passwrod: http response 200
 
 ### Acceptance criteria
 
