@@ -1,6 +1,9 @@
 package ir.sban.spring.pricewatch.user.model;
 
-import jakarta.persistence.*;
+import ir.sban.spring.pricewatch.base.model.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

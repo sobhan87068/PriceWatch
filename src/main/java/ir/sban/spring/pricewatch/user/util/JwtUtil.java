@@ -8,7 +8,6 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -40,28 +39,28 @@ public class JwtUtil {
         Date issued = new Date(System.currentTimeMillis());
         Date expiration = new Date(issued.getTime() + expirationMs);
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(issued)
-                .setExpiration(expiration)
+                .subject(email)
+                .issuedAt(issued)
+                .expiration(expiration)
                 .signWith(signingKey)
                 .compact();
     }
 
     // Get username from JWT token
     public String getUsernameFromToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(signingKey)
+        return Jwts.parser()
+                .verifyWith(signingKey)
                 .build()
-                .parseClaimsJws(token).getBody().getSubject();
+                .parseSignedClaims(token).getPayload().getSubject();
     }
 
     // Validate JWT token
     public boolean validateJwtToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(signingKey)
+            Jwts.parser()
+                    .verifyWith(signingKey)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
 
             return true;
         } catch (SecurityException e) {

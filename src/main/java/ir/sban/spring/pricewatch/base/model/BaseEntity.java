@@ -1,4 +1,4 @@
-package ir.sban.spring.pricewatch.user.model;
+package ir.sban.spring.pricewatch.base.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
